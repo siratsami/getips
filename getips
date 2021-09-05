@@ -1,0 +1,16 @@
+#!/bin/bash
+
+echo ""
+echo " Get ip addresses for domain or subdomains & their orgname and filetr cdns by B4GG3R"
+echo " Usage: getips subdomains.txt"
+echo ""
+
+echo " Extracting ip addresses for $1"
+for host in $(cat $1); do nslookup $host | grep 'Address:' | awk -F' ' '{print $2}' | grep -Ev -e ':' -e '1.1' | sort -u; echo $host; done >> $1-ips
+
+echo " Extracting orgnames for $1-ips ip addresses"
+for ip in $(cat $1-ips | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b" | sort -u); do whois $ip | grep -e OrgName -e netname | awk -F' ' '{print $2}' | sort -u && echo $ip; done >> $1-ipsorg
+
+echo " Filtering $1-ipsorg frome cdns"
+cat $1-ipsorg | sed -e '/AKAMAI/,+5d' | sed -e '/Newroz/,+5d' | sed -e '/Amazon/,+5d' | sed -e '/Cloud/,+5d' | sed -e '/APNIC-LABS/,+5d' >> $1-allipsorg
+echo " Done"
